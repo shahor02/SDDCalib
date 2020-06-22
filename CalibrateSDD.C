@@ -232,6 +232,14 @@ void CalibrateSDD(const char* qaOutFile,int rMin,int rMax, int useRunForAuto,
 		  const char* collName
 		  )
 {
+  
+  TString cvmfs = gSystem->Getenv("CVMFS");
+  if (!cvmfs.IsNull() && !gSystem->AccessPathName(cvmfs.Data())) {
+    cvmfs.Prepend("local://");
+    defOCDB = cvmfs;    
+  }
+  printf("Set Defauls CDB path to %s\n",cvmfs.Data());
+  
   TString fs = qaOutFile;
   gSystem->ExpandPathName(fs);
   TFile* fl = TFile::Open(fs.Data());

@@ -28,12 +28,13 @@ kNFl1=14
 #-------------------------------------------------------------------
 function Usage() {
 #
-    echo "Usage: PrepCalibSDD.sh -p <period> [-i inputFile] [-b runToBridge]"
+    echo "Usage: PrepCalibSDD.sh -p <period>  -y <year> [-i inputFile] [-b runToBridge]"
     echo "period      : LHC12f ... etc"
     echo "inputFile   : output report of mrgCPasses.sh script, if not specified"
     echo "              then reportMerge<period>.txt will be used"
     echo "runToBridge : if needed, first object created will cover the range"
     echo "              starting from <runToBridge>+1"
+    echo "year        : production year"
     exit
 }
 
@@ -160,6 +161,7 @@ while [ $# -gt 0 ] ; do
         -p) period=$2;  shift 2 ;;
         -i) inpFile=$2; shift 2 ;;
         -b) lastRunUsed=$2;  shift 2 ;;
+        -y) year=$2; shift 2 ;;
     esac
 done
 
@@ -171,6 +173,14 @@ fi
 if [ -z "$inpFile" ] ; then Usage ; fi
 if [ -n "$lastRunUsed" ] ; then echo "Will bridge period $period to run $lastRunUsed" ; fi
 #
+if [ -z "$year"  ] ; then Usage ; fi
+
+cvmfsPath="/cvmfs/alice-ocdb.cern.ch/calibration/data"
+export year
+export CVMFS="$cvmfsPath"/"$year"/"OCDB"
+
+
+
 scrMrgFill0="mrgFillCP0_${period}.sh"
 scrMrgFill1="mrgFillCP1_${period}.sh"
 scrCalFill0="CalibFillCP0_${period}.sh"
@@ -225,7 +235,8 @@ echo -e "hadd -f qaCPass0mrgFill_${period}/qa_${period}_NoSlp.root qaCPass0mrgFi
 echo -e "hadd -f qaCPass1mrgFill_${period}/qa_${period}_NoSlp.root qaCPass1mrgFill_${period}/qa_fill*NoSlp.root" >> ${scrMrgFill1}
 
 #--------------------------------------------------------
-echo "period=${period}" >> ${scrCalFill0}
+echo -e "export CVMFS=${CVMFS}" >> ${scrCalFill0}
+echo -e "period=${period}" >> ${scrCalFill0}
 echo \
 '((nobj=${#rangeArr[@]}/5))
 #
@@ -264,7 +275,9 @@ mv ITS "ITS_${period}"
 
 
 #--------------------------------------------------------
-echo "period=${period}" >> ${scrCalFill1}
+echo -e "export CVMFS=${CVMFS}" >> ${scrCalFill1}
+echo -e "period=${period}" >> ${scrCalFill1}
+
 echo \
 '((nobj=${#rangeArr[@]}/5))
 #
